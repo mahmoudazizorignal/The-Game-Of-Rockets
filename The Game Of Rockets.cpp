@@ -13,265 +13,45 @@
 #include <Windows.h>
 using namespace std;
 
+
+
 #define Human1 1
 #define Human2 2
 #define Computer -1
 
-
+int n;
 vector<vector<string>> board;
 vector<pair<int,int>> First_Rock, Second_Rock;
-int n;
 
-void display_board()
-{
-	cout << setw(5 * n + 2) << setfill('=') << "\n";
-	for (int i = 0; i < n; i++)
-	{
-		cout << "| ";
-		for (int j = 0; j < n; j++)
-		{
-			cout << board[i][j] << " | ";
-		}
-		cout << endl;
-		if (i < n - 1) cout << setw(5 * n + 2) << setfill('-') << "\n";
-	}
-	cout << setw(5 * n + 2) << setfill('=') << "\n";
-}
-void set_board()
-{
-	board.resize(n);
-	for (int i = 0; i < board.size(); i++) board[i].resize(n);
-	for (int i = 0; i < n; i++)
-	{
-		for (int j = 0; j < n; j++)
-		{
-			if (j == 0 && i > 0 && i < n - 1) board[i][j] = " >";
-			else if (i == 0 && j > 0 && j < n - 1) board[i][j] = "\\/";
-			else board[i][j] = "--";
-		}
-	}
-}
-void set_rock()
-{
-	First_Rock.resize(n - 2);
-	Second_Rock.resize(n - 2);
-
-	for (int i = 1; i < n - 1; i++)
-	{
-		First_Rock[i - 1] = { i, 0 };
-		Second_Rock[i - 1] = { 0, i };
-	}
-}
-bool TakeMove(int Rock, int P)
-{
-	int r, c;
-	if (P == Human1) {
-		r = First_Rock[Rock - 1].first;
-		c = First_Rock[Rock - 1].second;
-
-		if (c == n - 1) return false;
-		if (c < n - 2 && board[r][c + 1] != "--" && board[r][c + 2] != "--") return false;
-
-		if (board[r][c + 1] == "--") {
-			swap(board[r][c], board[r][c + 1]);
-			First_Rock[Rock - 1].second++;
-		}
-		else if (board[r][c + 2] == "--") {
-			swap(board[r][c], board[r][c + 2]);
-			First_Rock[Rock - 1].second += 2;
-		}
-	}
-	else {
-		r = Second_Rock[Rock - 1].first;
-		c = Second_Rock[Rock - 1].second;
-
-		if (r == n - 1) return false;
-		if (r < n - 2 && board[r + 1][c] != "--" && board[r + 2][c] != "--") return false;
-
-		if (board[r + 1][c] == "--") {
-			swap(board[r][c], board[r + 1][c]);
-			Second_Rock[Rock - 1].first++;
-		}
-		else if (board[r + 2][c] == "--") {
-			swap(board[r][c], board[r + 2][c]);
-			Second_Rock[Rock - 1].first += 2;
-		}
-	}
-
-	return true;
-}
-bool IsThererValidMove(int P)
-{
-	bool check = false;
-	if (P == Human1)
-	{
-		for (int i = 0; i < n - 2; i++)
-		{
-			int r = First_Rock[i].first;
-			int c = First_Rock[i].second;
-
-			if (c < n - 1 && board[r][c + 1] == "--") check = true;
-			else if (c < n - 2 && board[r][c + 2] == "--") check = true;
-		}
-	}
-	else
-	{
-		for (int i = 0; i < n - 2; i++)
-		{
-			int r = Second_Rock[i].first;
-			int c = Second_Rock[i].second;
-
-			if (r < n - 1 && board[r + 1][c] == "--") check = true;
-			else if (r < n - 2 && board[r + 2][c] == "--") check = true;
-		}
-	}
-
-	return check;
-}
-int isWinner() {
-	int cnt1 = 0, cnt2 = 0;
-	for (int i = 1; i < n - 1; i++)
-	{
-		if (board[i][n - 1] != "--") cnt1++;
-		if (board[n - 1][i] != "--") cnt2++;
-	}
-	if (cnt1 == n - 2) return 2;
-	if (cnt2 == n - 2) return -2;
-	return 0;
-}
-
+void display_board();
+void set_board();
+void set_rock();
+bool TakeMove(int Rock, int P);
+bool IsThererValidMove(int P);
+int isWinner() ;
 int minimax(int P, int alpha, int beta);
 int PlayAnyGame()
-{
-	int BestScore = 1000, BestMove = 0;
-	
-	for (int i = 0; i < n - 2; i++)
-	{
-		int r = Second_Rock[i].first;
-		int c = Second_Rock[i].second;
+void MainProgram();
 
-		if (r == n - 1) continue;
-		if (r < n - 2 && board[r + 1][c] != "--" && board[r + 2][c] != "--") continue;
 
-		if (board[r + 1][c] == "--") {
-			swap(board[r][c], board[r + 1][c]);
-			Second_Rock[i].first++;
-
-			int score = minimax(Human1, -1000, 1000);
-			if (score < BestScore) {
-				BestScore = score;
-				BestMove = i + 1;
-			}
-
-			Second_Rock[i].first--;
-			swap(board[r][c], board[r + 1][c]);
-		}
-		else if (board[r + 2][c] == "--") {
-			swap(board[r][c], board[r + 2][c]);
-			Second_Rock[i].first += 2;
-
-			int score = minimax(Human1, -1000, 1000);
-			if (score < BestScore) {
-				BestScore = score;
-				BestMove = i + 1;
-			}
-
-			Second_Rock[i].first -= 2;
-			swap(board[r][c], board[r + 2][c]);
-		}
-
-	}
-	return BestMove;
-}
-int minimax(int P, int alpha, int beta)
-{
-	if (isWinner() == 2) return 3;
-	if (isWinner() == -2) return -3;
-
-	if (!IsThererValidMove(P)) return (P == Human1 ? Computer : Human1) * 2;
-
-	if (P == Human1) {
-		int BestScore = -1000;
-		for (int i = 0; i < n - 2; i++)
-		{
-			int r = First_Rock[i].first;
-			int c = First_Rock[i].second;
-
-			if (c == n - 1) continue;
-			if (c < n - 2 && board[r][c + 1] != "--" && board[r][c + 2] != "--") continue;
-
-			if (board[r][c + 1] == "--") {
-				swap(board[r][c], board[r][c + 1]);
-				First_Rock[i].second++;
-
-				int score = minimax(Computer, alpha, beta);
-				BestScore = max(BestScore, score);
-
-				First_Rock[i].second--;
-				swap(board[r][c], board[r][c + 1]);
-
-				alpha = max(alpha, BestScore);
-				if (beta <= alpha) break;
-			}
-			else if (board[r][c + 2] == "--") {
-				swap(board[r][c], board[r][c + 2]);
-				First_Rock[i].second += 2;
-
-				int score = minimax(Computer, alpha, beta);
-				BestScore = max(BestScore, score);
-
-				First_Rock[i].second -= 2;
-				swap(board[r][c], board[r][c + 2]);
-
-				alpha = max(alpha, BestScore);
-				if (beta <= alpha) break;
-			}
-		}
-		return BestScore;
-	}
-	else {
-		int BestScore = 1000;
-		for (int i = 0; i < n - 2; i++)
-		{
-			int r = Second_Rock[i].first;
-			int c = Second_Rock[i].second;
-			
-			if (r == n - 1) continue;
-			if (r < n - 2 && board[r + 1][c] != "--" && board[r + 2][c] != "--") continue;
-
-			if (board[r + 1][c] == "--") {
-				swap(board[r][c], board[r + 1][c]);
-				Second_Rock[i].first++;
-
-				int score = minimax(Human1, alpha, beta);
-				BestScore = min(BestScore, score);
-
-				Second_Rock[i].first--;
-				swap(board[r][c], board[r + 1][c]);
-
-				beta = min(beta, BestScore);
-				if (beta <= alpha) break;
-			}
-			else if (board[r + 2][c] == "--") {
-				swap(board[r][c], board[r + 2][c]);
-				Second_Rock[i].first += 2;
-
-				int score = minimax(Human1, alpha, beta);
-				BestScore = min(BestScore, score);
-
-				Second_Rock[i].first -= 2;
-				swap(board[r][c], board[r + 2][c]);
-
-				beta = min(beta, BestScore);
-				if (beta <= alpha) break;
-			}
-		}
-		return BestScore;
-	}
-}
 
 int main()
 {
+	MainProgram();
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+void MainProgram() {
 	cout << "****WELCOME TO THE ROCKET GAME****\n";
 	cout << "\n" << "Please Determine The Board Size(at least 2): ";
 	cin >> n;
@@ -380,7 +160,6 @@ int main()
 			system("cls");
 
 			
-			// CODE HERE!
 			int BestMove = PlayAnyGame();
 			if (BestMove == 0 && !IsThererValidMove(Computer)) {
 				cout << "AI cannot make move\n";
@@ -412,5 +191,259 @@ int main()
 			}
 		}
 	}
+}
+
+
+
+
+
+
+void display_board()
+{
+	cout << setw(5 * n + 2) << setfill('=') << "\n";
+	for (int i = 0; i < n; i++)
+	{
+		cout << "| ";
+		for (int j = 0; j < n; j++)
+		{
+			cout << board[i][j] << " | ";
+		}
+		cout << endl;
+		if (i < n - 1) cout << setw(5 * n + 2) << setfill('-') << "\n";
+	}
+	cout << setw(5 * n + 2) << setfill('=') << "\n";
+}
+
+void set_board()
+{
+	board.resize(n);
+	for (int i = 0; i < board.size(); i++) board[i].resize(n);
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			if (j == 0 && i > 0 && i < n - 1) board[i][j] = " >";
+			else if (i == 0 && j > 0 && j < n - 1) board[i][j] = "\\/";
+			else board[i][j] = "--";
+		}
+	}
+}
+void set_rock()
+{
+	First_Rock.resize(n - 2);
+	Second_Rock.resize(n - 2);
+
+	for (int i = 1; i < n - 1; i++)
+	{
+		First_Rock[i - 1] = { i, 0 };
+		Second_Rock[i - 1] = { 0, i };
+	}
+}
+bool TakeMove(int Rock, int P)
+{
+	int r, c;
+	if (P == Human1) {
+		r = First_Rock[Rock - 1].first;
+		c = First_Rock[Rock - 1].second;
+
+		if (c == n - 1) return false;
+		if (c < n - 2 && board[r][c + 1] != "--" && board[r][c + 2] != "--") return false;
+
+		if (board[r][c + 1] == "--") {
+			swap(board[r][c], board[r][c + 1]);
+			First_Rock[Rock - 1].second++;
+		}
+		else if (board[r][c + 2] == "--") {
+			swap(board[r][c], board[r][c + 2]);
+			First_Rock[Rock - 1].second += 2;
+		}
+	}
+	else {
+		r = Second_Rock[Rock - 1].first;
+		c = Second_Rock[Rock - 1].second;
+
+		if (r == n - 1) return false;
+		if (r < n - 2 && board[r + 1][c] != "--" && board[r + 2][c] != "--") return false;
+
+		if (board[r + 1][c] == "--") {
+			swap(board[r][c], board[r + 1][c]);
+			Second_Rock[Rock - 1].first++;
+		}
+		else if (board[r + 2][c] == "--") {
+			swap(board[r][c], board[r + 2][c]);
+			Second_Rock[Rock - 1].first += 2;
+		}
+	}
+
+	return true;
+}
+bool IsThererValidMove(int P)
+{
+	bool check = false;
+	if (P == Human1)
+	{
+		for (int i = 0; i < n - 2; i++)
+		{
+			int r = First_Rock[i].first;
+			int c = First_Rock[i].second;
+
+			if (c < n - 1 && board[r][c + 1] == "--") check = true;
+			else if (c < n - 2 && board[r][c + 2] == "--") check = true;
+		}
+	}
+	else
+	{
+		for (int i = 0; i < n - 2; i++)
+		{
+			int r = Second_Rock[i].first;
+			int c = Second_Rock[i].second;
+
+			if (r < n - 1 && board[r + 1][c] == "--") check = true;
+			else if (r < n - 2 && board[r + 2][c] == "--") check = true;
+		}
+	}
+
+	return check;
+}
+
+int isWinner() {
+	int cnt1 = 0, cnt2 = 0;
+	for (int i = 1; i < n - 1; i++)
+	{
+		if (board[i][n - 1] != "--") cnt1++;
+		if (board[n - 1][i] != "--") cnt2++;
+	}
+	if (cnt1 == n - 2) return 2;
+	if (cnt2 == n - 2) return -2;
 	return 0;
+}
+
+int PlayAnyGame()
+{
+	int BestScore = 1000, BestMove = 0;
+	
+	for (int i = 0; i < n - 2; i++)
+	{
+		int r = Second_Rock[i].first;
+		int c = Second_Rock[i].second;
+
+		if (r == n - 1) continue;
+		if (r < n - 2 && board[r + 1][c] != "--" && board[r + 2][c] != "--") continue;
+
+		if (board[r + 1][c] == "--") {
+			swap(board[r][c], board[r + 1][c]);
+			Second_Rock[i].first++;
+
+			int score = minimax(Human1, -1000, 1000);
+			if (score < BestScore) {
+				BestScore = score;
+				BestMove = i + 1;
+			}
+
+			Second_Rock[i].first--;
+			swap(board[r][c], board[r + 1][c]);
+		}
+		else if (board[r + 2][c] == "--") {
+			swap(board[r][c], board[r + 2][c]);
+			Second_Rock[i].first += 2;
+
+			int score = minimax(Human1, -1000, 1000);
+			if (score < BestScore) {
+				BestScore = score;
+				BestMove = i + 1;
+			}
+
+			Second_Rock[i].first -= 2;
+			swap(board[r][c], board[r + 2][c]);
+		}
+
+	}
+	return BestMove;
+}
+
+int minimax(int P, int alpha, int beta)
+{
+	if (isWinner() == 2) return 3;
+	if (isWinner() == -2) return -3;
+
+	if (!IsThererValidMove(P)) return (P == Human1 ? Computer : Human1) * 2;
+
+	if (P == Human1) {
+		int BestScore = -1000;
+		for (int i = 0; i < n - 2; i++)
+		{
+			int r = First_Rock[i].first;
+			int c = First_Rock[i].second;
+
+			if (c == n - 1) continue;
+			if (c < n - 2 && board[r][c + 1] != "--" && board[r][c + 2] != "--") continue;
+
+			if (board[r][c + 1] == "--") {
+				swap(board[r][c], board[r][c + 1]);
+				First_Rock[i].second++;
+
+				int score = minimax(Computer, alpha, beta);
+				BestScore = max(BestScore, score);
+
+				First_Rock[i].second--;
+				swap(board[r][c], board[r][c + 1]);
+
+				alpha = max(alpha, BestScore);
+				if (beta <= alpha) break;
+			}
+			else if (board[r][c + 2] == "--") {
+				swap(board[r][c], board[r][c + 2]);
+				First_Rock[i].second += 2;
+
+				int score = minimax(Computer, alpha, beta);
+				BestScore = max(BestScore, score);
+
+				First_Rock[i].second -= 2;
+				swap(board[r][c], board[r][c + 2]);
+
+				alpha = max(alpha, BestScore);
+				if (beta <= alpha) break;
+			}
+		}
+		return BestScore;
+	}
+	else {
+		int BestScore = 1000;
+		for (int i = 0; i < n - 2; i++)
+		{
+			int r = Second_Rock[i].first;
+			int c = Second_Rock[i].second;
+			
+			if (r == n - 1) continue;
+			if (r < n - 2 && board[r + 1][c] != "--" && board[r + 2][c] != "--") continue;
+
+			if (board[r + 1][c] == "--") {
+				swap(board[r][c], board[r + 1][c]);
+				Second_Rock[i].first++;
+
+				int score = minimax(Human1, alpha, beta);
+				BestScore = min(BestScore, score);
+
+				Second_Rock[i].first--;
+				swap(board[r][c], board[r + 1][c]);
+
+				beta = min(beta, BestScore);
+				if (beta <= alpha) break;
+			}
+			else if (board[r + 2][c] == "--") {
+				swap(board[r][c], board[r + 2][c]);
+				Second_Rock[i].first += 2;
+
+				int score = minimax(Human1, alpha, beta);
+				BestScore = min(BestScore, score);
+
+				Second_Rock[i].first -= 2;
+				swap(board[r][c], board[r + 2][c]);
+
+				beta = min(beta, BestScore);
+				if (beta <= alpha) break;
+			}
+		}
+		return BestScore;
+	}
 }
